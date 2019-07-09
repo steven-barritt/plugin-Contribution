@@ -50,6 +50,7 @@ class Contribution_ContributionController extends Omeka_Controller_AbstractActio
             $contribItems = $contribItemTable->findBy(array('contributor'=>$user->id));
         }
         $this->view->contrib_items = $contribItems;
+        $this->view->total_results = count($contribItems);
     }
 
     /**
@@ -185,6 +186,7 @@ class Contribution_ContributionController extends Omeka_Controller_AbstractActio
     protected function _processForm($post)
     {
         if (!empty($post)) {
+
             //for the "Simple" configuration, look for the user if exists by email. Log them in.
             //If not, create the user and log them in.
             $user = current_user();
@@ -242,8 +244,9 @@ class Contribution_ContributionController extends Omeka_Controller_AbstractActio
             if (!empty($collectionId) && is_numeric($collectionId)) {
                 $itemMetadata['collection_id'] = (int) $collectionId;
             }
-
-            $fileMetadata = $this->_processFileUpload($contributionType);
+ // TODO Check if there is at least one file if one file or more is required and remove the catch below.
+            $fileMetadata = $this->_processFilesUpload($contributionType);
+/*            $fileMetadata = $this->_processFileUpload($contributionType);*/
 
             // This is a hack to allow the file upload job to succeed
             // even with the synchronous job dispatcher.
@@ -259,23 +262,28 @@ class Contribution_ContributionController extends Omeka_Controller_AbstractActio
                 $item = update_item($item, $itemMetadata, array(), $fileMetadata);
             } catch(Omeka_Validator_Exception $e) {
                 $this->flashValidatonErrors($e);
+                $item->delete();
                 return false;
             } catch (Omeka_File_Ingest_InvalidException $e) {
                 // Copying this cruddy hack
-                if (strstr($e->getMessage(), "'contributed_file'")) {
+                             
+               if (strstr($e->getMessage(), "'file'")) {
                    $this->_helper->flashMessenger("You must upload a file when making a {$contributionType->display_name} contribution.", 'error');
+                }
+                elseif (strstr($e->getMessage(), "file_")) {
+                    $this->_helper->flashMessenger(__('One or more files have not been uploaded.')
+                        . ' ' . __('You must upload a file when making a %s contribution.', $contributionType->display_name), 'error');
                 } else {
                     $this->_helper->flashMessenger($e->getMessage());
                 }
+                $item->delete();
                 return false;
             } catch (Exception $e) {
                 $this->_helper->flashMessenger($e->getMessage());
+                $item->delete();
                 return false;
             }
             $this->_addElementTextsToItem($item, $post['Elements']);
-            if ($contributionType->add_tags && isset($post['tags'])) {
-                $item->addTags($post['tags']);
-            }
             // Allow plugins to deal with the inputs they may have added to the form.
             fire_plugin_hook('contribution_save_form', array('contributionType'=>$contributionType,'record'=>$item, 'post'=>$post));
             $item->save();
@@ -323,10 +331,40 @@ class Contribution_ContributionController extends Omeka_Controller_AbstractActio
             } else {
                 $options['ignoreNoFile'] = true;
             }
+//SB
+            $fileMetadata = array(
+                'file_transfer_type' => 'Upload',
+                'files' => array('contributed_file1', 'contributed_file2', 'contributed_file3', 'contributed_file4', 'contributed_file5', 'contributed_file6', 'contributed_file7', 'contributed_file8'),
+                'file_ingest_options' => $options
+            );
+//var_dump($fileMetadata);
+//bob();
+            // Add the whitelists for uploaded files
+            $fileValidation = new ContributionFileValidation;
+            $fileValidation->enableFilter();
+
+            return $fileMetadata;
+        }
+        return array();
+    }
+    /**
+     * Deals with files specified on the contribution form.
+     *
+     * @todo Check if multiple files are allowed.
+     * @todo Error when option is required and when multiple files are allowed: an empty contributed_file input generate an error.
+     *
+     * @param ContributionType $contributionType Type of contribution.
+     * @return array Files upload array.
+     */
+    protected function _processFilesUpload($contributionType)
+    {
+        if ($contributionType->isFileAllowed()) {
+            $options = array();
+            $options['ignoreNoFile'] = !$contributionType->isFileRequired();
 
             $fileMetadata = array(
                 'file_transfer_type' => 'Upload',
-                'files' => 'contributed_file',
+                'files' => 'file',
                 'file_ingest_options' => $options
             );
 
@@ -338,6 +376,7 @@ class Contribution_ContributionController extends Omeka_Controller_AbstractActio
         }
         return array();
     }
+
 
     protected function _linkItemToContributedItem($item, $contributor, $post)
     {

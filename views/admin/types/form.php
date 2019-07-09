@@ -43,6 +43,17 @@
             </div>
         </div>
      </div>  
+     <div class="field">
+        <div class="two columns alpha">
+            <label><?php echo __("Allow Multiple File Upload"); ?></label>
+        </div>
+        <div class="inputs five columns omega">
+            <p class="explanation"><?php echo __("Allow to upload multiple files for one item."); ?></p>
+            <div class="input-block">
+                <?php echo $this->formCheckbox("multiple_files", null, array('checked' => $contribution_type->multiple_files)); ?>
+            </div>
+        </div>
+     </div>
 
      <div class="field">
         <div class="two columns alpha">
