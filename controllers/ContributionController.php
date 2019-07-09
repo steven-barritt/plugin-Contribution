@@ -284,6 +284,9 @@ class Contribution_ContributionController extends Omeka_Controller_AbstractActio
                 return false;
             }
             $this->_addElementTextsToItem($item, $post['Elements']);
+            if ($contributionType->add_tags && isset($post['tags'])) {
+                $item->addTags($post['tags']);
+            }
             // Allow plugins to deal with the inputs they may have added to the form.
             fire_plugin_hook('contribution_save_form', array('contributionType'=>$contributionType,'record'=>$item, 'post'=>$post));
             $item->save();
