@@ -37,8 +37,8 @@ foreach ($type->getTypeElements() as $contributionTypeElement) {
         <?php echo $this->formLabel('tags', __('Add Tags')); ?>
     </div>
     <div class="inputs five columns omega">
-        <p id="add-tags-explanation" class="explanation"><?php echo __('Separate tags with %s', option('tag_delimiter')); ?></p>
         <?php echo $this->formText('tags'); ?>
+        <p id="add-tags-explanation" class="_explanation"><?php echo __('Separate tags with "%s"', option('tag_delimiter')); ?></p>
     </div>
 </div>
 <?php endif; ?>
