@@ -92,7 +92,31 @@ if (!Omeka_Captcha::isConfigured()): ?>
                         $status = 'private';
                         $statusText = __('Private contribution');
                     }
-                } ?>
+                } 
+                
+                //SB 2019
+                /* 	adding an option to request a hard copy of the contributed item
+                	if the public status is 2 the the request has been sent
+                	if the item has been put in a collection then it has been received
+                	if public is 1 then no request has been made but it is public
+                	otherwise show nothing
+                
+                */
+                $hardcopy = 'none';
+				if (isset($item->collection_id)){
+                	$hardcopyText = __('Hard copy received');
+                	$hardcopy = 'received';
+                }elseif($item->public && $contributedItem->requested && !isset($item->collection) ){
+                	$hardcopyText = __('Hard copy requested');
+                	$hardcopy = 'requested';
+                }elseif($item->public){
+                	$hardcopyText = __('Request a hard copy');
+                }else{
+                	$hardcopyText = __('Item needs review');
+                	$hardcopy = 'no';
+                }
+                
+                ?>
             <tr class="contribution <?php if(++$key%2==1) echo 'odd'; else echo 'even'; ?>">
                 <?php if ($allowToManage): ?>
                 <td class="batch-edit-check" scope="row">
@@ -126,6 +150,13 @@ if (!Omeka_Captcha::isConfigured()): ?>
                     <span class="contribution toggle-status status <?php echo $status; ?>"><?php echo $statusText; ?></span>
                     <?php endif; ?>
                 </td>
+                <td class="contribution-request">
+                    <?php if ($allowToManage && $hardcopy == 'none'): ?>
+                    <span id="contribution-request-<?php echo $contributedItem->id; ?>" class="contribution request status <?php echo $hardcopy; ?>"><a href="<?php echo ADMIN_BASE_URL; ?>" ><?php echo $hardcopyText; ?></a></span>
+                    <?php else: ?>
+                    <span id="contribution-request-<?php echo $contributedItem->id; ?>" class="contribution request status <?php echo $hardcopy; ?>"><?php echo $hardcopyText; ?></span>
+                    <?php endif; ?>
+                </td>
                 <td class="contribution-date"><?php echo format_date(metadata($item, 'added'), Zend_Date::DATETIME_MEDIUM); ?></td>
             </tr>
             <?php endforeach; ?>
@@ -155,7 +186,11 @@ if (!Omeka_Captcha::isConfigured()): ?>
                 'proposed':<?php echo json_encode(__('Needs review (click to make public)')); ?>,
                 'approved':<?php echo json_encode(__('Public (click to put in review)')); ?>,
                 'private':<?php echo json_encode(__('Private')); ?>,
-                'rejected':<?php echo json_encode(__('Rejected')); ?>,
+                'rejected':<?php echo json_encode(__('Rejected (click to put in review)')); ?>,
+                'requested':<?php echo json_encode(__('Hard copy requested')); ?>,
+                'received':<?php echo json_encode(__('Hard copy received')); ?>,
+                'notrequested':<?php echo json_encode(__('Request a hard copy')); ?>,
+                'needsreview':<?php echo json_encode(__('Item needs review')); ?>,
                 'confirmation':<?php echo json_encode(__('Are you sure you want to remove these contributions?')); ?>
             }}
         );
