@@ -22,7 +22,9 @@ class Contribution_AjaxController extends Omeka_Controller_AbstractActionControl
     /**
      * Handle AJAX requests to update a record.
      */
-/*    public function updateAction()
+/*    
+    public function updateAction()
+
     {
         if (!$this->_checkAjax('update')) {
             return;
@@ -61,7 +63,6 @@ class Contribution_AjaxController extends Omeka_Controller_AbstractActionControl
             $this->getResponse()->setHttpResponseCode(500);
         }
     }
-
 
      */
     public function updateAction()

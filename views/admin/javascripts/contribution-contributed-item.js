@@ -10,7 +10,6 @@ jQuery(document).ready(function() {
 
         jQuery('#reject-overlay').show();
     });
-    
     jQuery('.contribution.request a').click(function(event){
         event.preventDefault();
         
@@ -39,7 +38,6 @@ jQuery(document).ready(function() {
         
         jQuery('#reject-overlay').hide();
     });
-
 
     jQuery('#reject-button').click(function(event){
         event.preventDefault();
@@ -86,33 +84,7 @@ jQuery(document).ready(function() {
         var ajaxUrl = jQuery(this).attr('href') + '/contribution/ajax/update';
         var URL = jQuery(this).attr('href');
         jQuery(this).addClass('transmit');
-        if (jQuery(this).hasClass('approved')) {
-            jQuery.post(ajaxUrl,
-                {
-                    status: 'proposed',
-                    id: id
-                },
-                function(data) {
-                    if (data == 'private') {
-                        current.removeClass('transmit');
-                    } else {
-                        current.addClass('proposed');
-                        current.removeClass('approved');
-                        current.removeClass('rejected');
-                        current.removeClass('private');
-                        current.removeClass('transmit');
-                        var request = jQuery('#contribution-request-' + id);
-                        if (request.hasClass('none') || request.hasClass('no')){
-                        	request.html('<a href="'+URL+'">'+Omeka.messages.contribution.notrequested+'</a>');
-                        }
-                        jQuery('#contribution-reject-' + id).hide();
-                        if (current.text() != '') {
-                            current.text(Omeka.messages.contribution.proposed);
-                        }
-                    }
-                }
-            );
-        } else {
+        if(jQuery(this).hasClass('proposed')){
             jQuery.post(ajaxUrl,
                 {
                     status: 'approved',
@@ -129,16 +101,41 @@ jQuery(document).ready(function() {
                         current.removeClass('transmit');
                         var request = jQuery('#contribution-request-' + id);
                         if (request.hasClass('none') || request.hasClass('no')){
+                        	request.html('<a href="'+URL+'">'+Omeka.messages.contribution.notrequested+'</a>');
+                        }
+                        jQuery('#contribution-reject-' + id).hide();
+                        if (current.text() != '') {
+                            current.text(Omeka.messages.contribution.approved);
+                        }
+                    }
+                }
+            );
+        } else{
+            jQuery.post(ajaxUrl,
+                {
+                    status: 'proposed',
+                    id: id
+                },
+                function(data) {
+                    if (data == 'private') {
+                        current.removeClass('transmit');
+                    } else {
+                        current.addClass('proposed');
+                        current.removeClass('approved');
+                        current.removeClass('rejected');
+                        current.removeClass('private');
+                        current.removeClass('transmit');
+                        var request = jQuery('#contribution-request-' + id);
+                        if (request.hasClass('none') || request.hasClass('no')){
                         	request.html(Omeka.messages.contribution.needsreview);
                         }else if (request.hasClass('received')){
                         	request.html(Omeka.messages.contribution.received);
                         }else if (request.hasClass('requested')){
                         	request.html(Omeka.messages.contribution.requested);
                         }
-
                         jQuery('#contribution-reject-' + id).show();
                         if (current.text() != '') {
-                            current.text(Omeka.messages.contribution.approved);
+                            current.text(Omeka.messages.contribution.proposed);
                         }
                     }
                 }
