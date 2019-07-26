@@ -21,7 +21,8 @@ class Contribution_AjaxController extends Omeka_Controller_AbstractActionControl
 
     /**
      * Handle AJAX requests to update a record.
-     */
+     
+OLD:
     public function updateAction()
     {
         if (!$this->_checkAjax('update')) {
@@ -61,6 +62,65 @@ class Contribution_AjaxController extends Omeka_Controller_AbstractActionControl
             $this->getResponse()->setHttpResponseCode(500);
         }
     }
+
+     */
+    public function updateAction()
+    {
+        if (!$this->_checkAjax('update')) {
+            return;
+        }
+
+        // Handle action.
+        try {
+            $status = $this->_getParam('status');
+            // The administrator can only make public/review a public
+            // contributed item: he cannot change the choice of the user here
+            // (public/private).
+            if (!in_array($status, array('proposed', 'approved', 'rejected','requested'))) {
+                $this->getResponse()->setHttpResponseCode(400);
+                return;
+            }
+
+            $id = (integer) $this->_getParam('id');
+            $contributedItem = get_record_by_id('ContributionContributedItem', $id);
+            if (!$contributedItem) {
+                $this->getResponse()->setHttpResponseCode(400);
+                return;
+            }
+
+            // Check if the contributor set his item public or private.
+            if (!$contributedItem->public) {
+                // $this->getResponse()->setHttpResponseCode(400);
+                $this->getResponse()->setBody('private');
+                return;
+            }
+
+
+            // Update status (set public or to be reviewed).
+            // TODO Currently, only "Public" and "Needs review" status are managed.
+            if ($status === 'approved'){
+	            $contributedItem->Item->public = 1;
+            }elseif ($status === 'proposed'){
+	            $contributedItem->Item->public = 0;
+            	$contributedItem->rejected = 0;
+	            
+            }elseif ($status === 'requested'){
+	            $contributedItem->Item->public = 2;            
+            }elseif ($status === 'rejected'){
+	            $contributedItem->Item->public = 0;
+
+            	$contributedItem->rejected = $this->_getParam('reject');
+/*            	            error_log();*/
+
+            }
+            $contributedItem->Item->save();
+            $contributedItem->save();
+        } catch (Exception $e) {
+            $this->getResponse()->setHttpResponseCode(500);
+        }
+    }
+
+
 
     /**
      * Handle AJAX requests to delete a record.

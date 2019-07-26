@@ -1,3 +1,27 @@
+
+<div id="reject-overlay">
+<div id="reject-popup">
+	<p>
+  Select a reason for rejecting the contribution:
+  </p>
+    <select id="popup-select">
+    <?php 
+/*    	$db = get_db();*/
+    	$taxonomy = get_db()->getTable('Taxonomy')->findBy(array('name'=>'Reject'));
+    	$reasons = get_db()->getTable('TaxonomyTerm')->listByTaxonomy($taxonomy[0]->id);
+    ?>
+    <?php foreach($reasons as $value => $text): ?>
+        <option value="<?php echo $value; ?>"><?php echo $text; ?></option>
+    <?php endforeach; ?>
+    </select>
+    <div id="reject-button" class="button">
+    	<a href="#">Reject</a>
+    </div>
+    <div id="cancel-button" class="button">
+    	<a href="#">Cancel</a>
+    </div>
+</div>
+</div>
 <?php
 /**
  * @version $Id$
@@ -19,7 +43,6 @@ echo $this->partial('contribution-navigation.php');
 ?>
 
 <div id="primary">
-
 <?php
 echo flash();
 
@@ -58,6 +81,7 @@ if (!Omeka_Captcha::isConfigured()): ?>
                 } else {
                     $browseHeadings[__('Publication Status')] = null;
                 }
+                $browseHeadings[__('Hard Copy')] = null;
                 $browseHeadings[__('Date Added')] = 'added';
                 echo browse_sort_links($browseHeadings, array('link_tag' => 'th scope="col"', 'list_tag' => ''));
                 ?>
@@ -79,6 +103,19 @@ if (!Omeka_Captcha::isConfigured()): ?>
                     } else {
                         $statusText = __('Public');
                     }
+                } elseif ($contributedItem->rejected) {
+                    if ($contributedItem->public) {
+                        $status = 'rejected';
+                        if($allowToManage) {
+                            $statusText = __('Rejected (click to put in review)');
+                        } else {
+                            $statusText = __('Rejected');
+                        }
+                    }
+                    else {
+                        $status = 'private';
+                        $statusText = __('Private contribution');
+                    }
                 } else {
                     if ($contributedItem->public) {
                         $status = 'proposed';
@@ -92,7 +129,31 @@ if (!Omeka_Captcha::isConfigured()): ?>
                         $status = 'private';
                         $statusText = __('Private contribution');
                     }
-                } ?>
+                } 
+                
+                //SB 2019
+                /* 	adding an option to request a hard copy of the contributed item
+                	if the public status is 2 the the request has been sent
+                	if the item has been put in a collection then it has been received
+                	if public is 1 then no request has been made but it is public
+                	otherwise show nothing
+                
+                */
+                $hardcopy = 'none';
+                if ($item->public == 2 && isset($item->collection)){
+                	$hardcopyText = __('Hard Copy Received');
+                	$hardcopy = 'received';
+                }elseif($item->public == 2 ){
+                	$hardcopyText = __('Hard Copy Requested');
+                	$hardcopy = 'requested';
+                }elseif($item->public){
+                	$hardcopyText = __('Request a hard copy');
+                }else{
+                	$hardcopyText = __('Item needs review');
+                	$hardcopy = 'no';
+                }
+                
+                ?>
             <tr class="contribution <?php if(++$key%2==1) echo 'odd'; else echo 'even'; ?>">
                 <?php if ($allowToManage): ?>
                 <td class="batch-edit-check" scope="row">
@@ -122,8 +183,22 @@ if (!Omeka_Captcha::isConfigured()): ?>
                 <td class="contribution-status">
                     <?php if ($allowToManage && ($status != 'private')): ?>
                     <a href="<?php echo ADMIN_BASE_URL; ?>" id="contribution-<?php echo $contributedItem->id; ?>" class="contribution toggle-status status <?php echo $status; ?>"><?php echo $statusText; ?></a>
+                		<p>
+                		<?php if($status == 'proposed'): ?>
+		                    <a href="<?php echo ADMIN_BASE_URL; ?>" id="contribution-reject-<?php echo $contributedItem->id; ?>" class="contribution status reject"><?php echo __('Reject'); ?></a>
+                		<?php else: ?>
+		                    <a href="<?php echo ADMIN_BASE_URL; ?>" id="contribution-reject-<?php echo $contributedItem->id; ?>" class="contribution status reject" style="display:none;"><?php echo __('Reject'); ?></a>
+	                    <?php endif; ?>
+						</p>
                     <?php else: ?>
                     <span class="contribution toggle-status status <?php echo $status; ?>"><?php echo $statusText; ?></span>
+                    <?php endif; ?>
+                </td>
+                <td class="contribution-request">
+                    <?php if ($allowToManage && $hardcopy == 'none'): ?>
+                    <a href="<?php echo ADMIN_BASE_URL; ?>" id="contribution-<?php echo $contributedItem->id; ?>" class="contribution toggle-status status <?php echo $status; ?>"><?php echo $hardcopyText; ?></a>
+                    <?php else: ?>
+                    <span class="contribution toggle-status status <?php echo $status; ?>"><?php echo $hardcopyText; ?></span>
                     <?php endif; ?>
                 </td>
                 <td class="contribution-date"><?php echo format_date(metadata($item, 'added'), Zend_Date::DATETIME_MEDIUM); ?></td>
@@ -155,7 +230,7 @@ if (!Omeka_Captcha::isConfigured()): ?>
                 'proposed':<?php echo json_encode(__('Needs review (click to make public)')); ?>,
                 'approved':<?php echo json_encode(__('Public (click to put in review)')); ?>,
                 'private':<?php echo json_encode(__('Private')); ?>,
-                'rejected':<?php echo json_encode(__('Rejected')); ?>,
+                'rejected':<?php echo json_encode(__('Rejected (click to put in review)')); ?>,
                 'confirmation':<?php echo json_encode(__('Are you sure you want to remove these contributions?')); ?>
             }}
         );
@@ -164,7 +239,7 @@ if (!Omeka_Captcha::isConfigured()): ?>
 
 <?php else: ?>
     <?php if (total_records('ContributionContributedItem') == 0): ?>
-    <h2><?php echo __('There is no contribution yet.'); ?></h2>
+    <h2><?php echo __('There are no contributions yet.'); ?></h2>
     <?php else: ?>
     <p><?php echo __('The query searched %d contributions and returned no results.', total_records('ContributionContributedItem')); ?></p>
     <p><a href="<?php echo url('contribution/items'); ?>"><?php echo __('See all contributions.'); ?></a></p>
