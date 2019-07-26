@@ -58,6 +58,7 @@ if (!Omeka_Captcha::isConfigured()): ?>
                 } else {
                     $browseHeadings[__('Publication Status')] = null;
                 }
+                $browseHeadings[__('Request')] = null;
                 $browseHeadings[__('Date Added')] = 'added';
                 echo browse_sort_links($browseHeadings, array('link_tag' => 'th scope="col"', 'list_tag' => ''));
                 ?>
