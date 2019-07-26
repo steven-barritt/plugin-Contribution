@@ -11,15 +11,29 @@ $allowMultipleFiles = $isAllowed && $type->multiple_files;
 // When a file is required, the upload element is displayed before other ones.
 if ($isRequired): ?>
 <div id="files-form" class="field drawer-contents">
+	<div class="eight columns">
+		<p><?php echo __('You should upload a cover image, a spine image if aplicable then a back cover image before uploading a selection of at least 4 images of the inside.'); ?> </p>
+		<p><?php echo __('Try to keep the background a simple as possible and the light as even as possible. We trust you to make a good job of this, to show you work of to its best, you are photogrpahers after all.'); ?> </p>
+		<p><?php echo __('If you have a digital version of the book you may wish to use these images for the inside shots but please photograph the actual book for the covers.'); ?> </p>
+		<p><?php echo __('Please read the spcification below carefully.'); ?> </p>
+	</div>
     <div class="two columns alpha">
-        <?php echo $this->formLabel('file', __('Upload a file')); ?>
+        <?php echo $this->formLabel('file', __('Upload files')); ?>
+        <p><?php echo __('All images should be JPEG.<br/> Approx 1500px on the longest edge.<br/> Be in sRGB colour space.<br/> Quality 6-7 (60--70%).<br/> Maximum file size is 2MB.') ?></p>
     </div>
     <div id="files-metadata" class="inputs five columns omega">
         <div id="upload-files" class="files">
             <?php echo $this->formFile($allowMultipleFiles ? 'file[0]' : 'file', array('class' => 'fileinput button')); ?>
-            <p class="explanation"><?php echo __('The maximum file size is %s.', max_file_size()); ?></p>
+            <p class="explanation"><?php echo __('Cover Image', max_file_size()); ?></p>
             <?php echo $this->formFile($allowMultipleFiles ? 'file[1]' : 'file', array('class' => 'fileinput button')); ?>
-            <p class="explanation"><?php echo __('The maximum file size is %s.', max_file_size()); ?></p>
+            <p class="explanation"><?php echo __('Spine or Back Image', max_file_size()); ?></p>
+            <?php echo $this->formFile($allowMultipleFiles ? 'file[2]' : 'file', array('class' => 'fileinput button')); ?>
+            <p class="explanation"><?php echo __('Back Image or inside', max_file_size()); ?></p>
+            <?php echo $this->formFile($allowMultipleFiles ? 'file[3]' : 'file', array('class' => 'fileinput button')); ?>
+            <?php echo $this->formFile($allowMultipleFiles ? 'file[4]' : 'file', array('class' => 'fileinput button')); ?>
+            <?php echo $this->formFile($allowMultipleFiles ? 'file[5]' : 'file', array('class' => 'fileinput button')); ?>
+            <?php echo $this->formFile($allowMultipleFiles ? 'file[6]' : 'file', array('class' => 'fileinput button')); ?>
+            <p class="explanation"><?php echo __('Inside Images', max_file_size()); ?></p>
         </div>
     </div>
 </div>
